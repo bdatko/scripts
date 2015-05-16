@@ -1,0 +1,1 @@
+#*/1 * * * * SGE_ROOT=/opt/gridengine; export SGE_ROOT; SGE_CELL=default; export SGE_CELL; sh /home/bdatko/scripts/qcron.sh

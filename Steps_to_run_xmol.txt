@@ -1,0 +1,10 @@
+1. Compile the routine xmol.c
+    $ gcc xmol.c -o xmol.e
+
+
+2. Run the routine to generate trajectory file (.xmol)
+    Format:
+    $ ./xmol.e fort.8 [ output-file-name ] [ trajectory number ] 
+
+    Example:
+    $ ./xmol.e fort.8 trajectory1 1

@@ -1,0 +1,15 @@
+#!/bin/sh
+#PBS -N H_CO2_5_20_2014_
+#PBS -j oe
+#PBS -o pbs.out
+#PBS -r n
+#PBS -l nodes=1:ppn=2
+#PBS -l cput=100:00:00
+#PBS -M jmsmith1@temple.edu
+#PBS -m ae
+cd $PBS_O_WORKDIR
+export g09root=/usr/local
+export GAUSS_SCRDIR=/home/bdatko/extra
+source $g09root/g09/bsd/g09.profile
+#====================
+g09 <  H_CO2_DD_5_20_2014_$PBS_ARRAYID.inp > H_CO2_DD_5_20_2014_$PBS_ARRAYID.out 2>$PBS_JOBNAME.err
