@@ -110,7 +110,7 @@ test_fileexist ()
 {
     # PROGRAM test_fileexist
     #
-    # test_fileexist $file
+    # test_fileexist $file $file_type
     #
     # Purpose:
     #   To test if the file named file, passed as the argument file, exist and
