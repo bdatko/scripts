@@ -1,3 +1,4 @@
+#!/bin/bash
 #$ -j y
 #$ -S /bin/bash
 #$ -N Criegee_NPATH_test
@@ -17,8 +18,20 @@ LOGFILE=joblog-${JOB_NAME}-${JOB_ID}.txt
 # create scratch and work directories and copy input
 NWSCRATCH=/state/partition1/${JOB_ID}_${SGE_TASK_ID}
 WORKTASK=$WORK/${JOB_NAME}_${SGE_TASK_ID}
-mkdir -p $NWSCRATCH
-mkdir $WORKTASK
+
+# If the $NWSCRATCH doesn't exist, create directory
+if [ ! -d "$NWSCRATCH" ]; then
+    mkdir -p $NWSCRATCH
+else
+    echo The directory $NWSCRATCH already exist, no need to create another
+fi
+
+# If the $WORKTASK doesn't exist, create directory
+if [ ! -d "$WORKTASK" ]; then
+    mkdir $WORKTASK
+else
+    echo The directory $WORKTASK already exist, no need to create another
+fi
 
 # copy input files over to scratch
 cp $FILENAME.* $NWSCRATCH/
