@@ -200,25 +200,28 @@ cp_files ()
 
         # Cut the name of the output file to string together the name of the
         # other file names
-        local JOBNAME=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
+        local JOBNAME_NUM=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
 
         local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
 
         local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
 
+        local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed 's/_"$JOBNAME"/ /')
+
         # Update the log for debugging
-        echo JOBNAME=$JOBNAME >> $LOG 2>&1
+        echo JOBNAME_NUM=$JOBNAME >> $LOG 2>&1
         echo JOBID=$JOBID >> $LOG 2>&1
         echo JOBNUM=$JOBNUM >> $LOG 2>&1
+        echo JOBNAME=$JOBNAME >> $LOG 2>&1
         echo >> $LOG 2>&1
 
         # Copy the files to the desired directory
         cp $f $DIR >> $LOG 2>&1
-        cp $JOBNAME.nw $DIR >> $LOG 2>&1
-        cp $JOBNAME.dt $DIR >> $LOG 2>&1
-        cp "$JOBNAME"_"$JOBID"."$JOBNUM".fort.8 $DIR >> $LOG 2>&1
-        cp "$JOBNAME"_"$JOBID"."$JOBNUM".fort.50 $DIR >> $LOG 2>&1
-        cp varnames_TS1_Criegee_Simple.o$JOBNUM $DIR >> $LOG 2>&1
+        cp $JOBNAME_NUM.nw $DIR >> $LOG 2>&1
+        cp $JOBNAME_NUM.dt $DIR >> $LOG 2>&1
+        cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.8 $DIR >> $LOG 2>&1
+        cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.50 $DIR >> $LOG 2>&1
+        cp varnames_"$JOBNAME".o$JOBNUM $DIR >> $LOG 2>&1
     done
 
     # Update the log for the status from the last command in this sub function
