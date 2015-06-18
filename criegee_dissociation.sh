@@ -206,7 +206,7 @@ cp_files ()
 
         local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
 
-        local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed 's/_"$JOBNAME"/ /')
+        local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed "s/_$JOBNUM//")
 
         # Update the log for debugging
         echo JOBNAME_NUM=$JOBNAME >> $LOG 2>&1
