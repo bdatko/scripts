@@ -1312,7 +1312,7 @@ check_logfile()
                     # Run the sub function
                     echo Log file checked, there was no record of a previous\
                     run.
-                    cp_files $FILECOUNT $DIRNAME $LOG
+                    cp_files $FILECOUNT $DIRNAME $LOG $criegee
 
                     # Update the logfile
                     echo end of sub function $sub_function >> $LOG 2>&1
