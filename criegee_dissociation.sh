@@ -141,7 +141,7 @@ cp_files ()
 {
     # PROGRAM cp_files
     #
-    # cp_files $FILECOUNT $DIRNAME $LOGFILE
+    # cp_files $FILECOUNT $DIRNAME $LOGFILE $criegee
     #
     # Purpose:
     #   To copy all the output files that have met the fragmenation criteria
@@ -160,6 +160,8 @@ cp_files ()
     #   CHARACTER :: DIR          !local variable, string of the Fragmentation
     #                             !directory
     #   CHARACTER :: LOG          !local variable, string of the log file
+    #   CHARACTER :: opt          !local variable, string of the criegee
+    #                             !fragment
     #   CHARACTER(100) :: LIST    !local variable, list of strings of the names
     #                             !of the output files
     #   CHARACTER :: f            !string name of the files within the variable
@@ -180,52 +182,99 @@ cp_files ()
 
     local LOG=$3
 
-    # List of all the output files matching the fragmentation pattern
-    local LIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | \
-    awk '{print $1}' | sed 's/\:/ /')
+    local opt=$4
 
-    # Update the log for debugging
-    echo COUNT=$COUNT >> $LOG 2>&1
-    echo DIR=$DIR >> $LOG 2>&1
-    echo LIST=$LIST >> $LOG 2>&1
-    echo >> $LOG 2>&1
+    if [ "$opt" = "all" ]; then
 
-    ls -l | grep $DIR >> $LOG 2>&1
-
-    echo
-    echo Copying fragmentation files to $DIR . . .
-    echo
-
-    for f in $LIST; do
-
-        # Cut the name of the output file to string together the name of the
-        # other file names
-        local JOBNAME_NUM=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
-
-        local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
-
-        local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
-
-        local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed "s/_$JOBNUM//")
-
-        # Update the log for debugging
-        echo JOBNAME_NUM=$JOBNAME >> $LOG 2>&1
-        echo JOBID=$JOBID >> $LOG 2>&1
-        echo JOBNUM=$JOBNUM >> $LOG 2>&1
-        echo JOBNAME=$JOBNAME >> $LOG 2>&1
+        # Update the log fro debugging
+        echo COUNT=$COUNT >> $LOG 2>&1
+        echo DIR=$DIR >> $LOG 2>&1
+        echo opt=$opt >> $LOG 2>&1
         echo >> $LOG 2>&1
 
-        # Copy the files to the desired directory
-        cp $f $DIR >> $LOG 2>&1
-        cp $JOBNAME_NUM.nw $DIR >> $LOG 2>&1
-        cp $JOBNAME_NUM.dt $DIR >> $LOG 2>&1
-        cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.8 $DIR >> $LOG 2>&1
-        cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.50 $DIR >> $LOG 2>&1
-        cp varnames_"$JOBNAME".o$JOBNUM $DIR >> $LOG 2>&1
-    done
+        ls -l | grep $DIR >> $LOG 2>&1
 
-    # Update the log for the status from the last command in this sub function
-    echo `date` cp_files_EXIT=$? >> $LOG 2>&1
+        echo
+        echo Copying fragmentation files to $DIR . . .
+        echo
+
+        # iterate over all the output files
+        for f in ls *.out; do
+
+            # Cut the name of the output file to string together the name of
+            # the other file names
+            local JOBNAME_NUM=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
+
+            local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
+
+            local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
+
+            local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed "s/_$JOBNUM//")
+
+            # Update the log for debugging
+            echo JOBNAME_NUM=$JOBNAME >> $LOG 2>&1
+            echo JOBID=$JOBID >> $LOG 2>&1
+            echo JOBNUM=$JOBNUM >> $LOG 2>&1
+            echo JOBNAME=$JOBNAME >> $LOG 2>&1
+            echo >> $LOG 2>&1
+
+            # Copy the files to the desired directory
+            cp $f $DIR >> $LOG 2>&1
+        done
+
+        # Update the log for the status from the last command in this sub
+        # function
+        echo `date` cp_files_EXIT=$? >> $LOG 2>&1
+
+    else
+        
+        # List of all the output files matching the fragmentation pattern
+        local LIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | \
+        awk '{print $1}' | sed 's/\:/ /')
+
+        # Update the log for debugging
+        echo COUNT=$COUNT >> $LOG 2>&1
+        echo DIR=$DIR >> $LOG 2>&1
+        echo LIST=$LIST >> $LOG 2>&1
+        echo >> $LOG 2>&1
+
+        ls -l | grep $DIR >> $LOG 2>&1
+
+        echo
+        echo Copying fragmentation files to $DIR . . .
+        echo
+        
+        for f in $LIST; do
+            
+            # Cut the name of the output file to string together the name of the
+            # other file names
+            local JOBNAME_NUM=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
+            
+            local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
+            
+            local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
+
+            local JOBNAME=$(echo $f | sed 's/\./ /' | awk '{print $1}' | sed "s/_$JOBNUM//")
+
+            # Update the log for debugging
+            echo JOBNAME_NUM=$JOBNAME >> $LOG 2>&1
+            echo JOBID=$JOBID >> $LOG 2>&1
+            echo JOBNUM=$JOBNUM >> $LOG 2>&1
+            echo JOBNAME=$JOBNAME >> $LOG 2>&1
+            echo >> $LOG 2>&1
+
+            # Copy the files to the desired directory
+            cp $f $DIR >> $LOG 2>&1
+            cp $JOBNAME_NUM.nw $DIR >> $LOG 2>&1
+            cp $JOBNAME_NUM.dt $DIR >> $LOG 2>&1
+            cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.8 $DIR >> $LOG 2>&1
+            cp "$JOBNAME_NUM"_"$JOBID"."$JOBNUM".fort.50 $DIR >> $LOG 2>&1
+            cp varnames_"$JOBNAME".o$JOBNUM $DIR >> $LOG 2>&1
+        done
+
+       # Update the log for the status from the last command in this sub function
+       echo `date` cp_files_EXIT=$? >> $LOG 2>&1
+   fi
 }
 
 function frag_input()
@@ -925,97 +974,96 @@ function frag_input()
                 
             "all")
 
-            # Copying all Qs and Ps to the new input file
-            cp $INPUTFILE $DIR
-            cp $NWCHEMFILE $DIR
-            cd $DIR
+                # Copying all Qs and Ps to the new input file
+                cp $INPUTFILE $DIR
+                cp $NWCHEMFILE $DIR
+                cd $DIR
 
-            # Update the log
-            echo >> $local_LOG
-            pwd >> $local_LOG
-            echo >> $local_LOG 2>&1
-            echo \
-            "===============================================================================" >> $local_LOG
-
-            echo >> $local_LOG 2>&1
-            echo Start to iterate through the output files . . . >> $local_LOG 2>&1
-
-            for f in ls *.out; do
-
-                # Cut the name of the output file to string together the name of
-                # the other file names
-                local JOBNAME=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
-
-                local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
-
-                local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
-
-                # Create a copy of the input file increasing index by one
-                cp $INPUTFILE "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
-                cp $NWCHEMFILE "$NWCHEMFILE_prefix"_$COUNT."$NWCHEMFILE_suffix"
-                sed -i "s/NEED_INDEX_NUM_HERE/$COUNT/" "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
-
+                # Update the log
+                echo >> $local_LOG
+                pwd >> $local_LOG
                 echo >> $local_LOG 2>&1
-                echo -------------------- >> $local_LOG 2>&1
-                echo Reading file $f >> $local_LOG 2>&1
-                echo Appending to file
-                "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> $local_LOG 2>&1
+                echo \
+                "===============================================================================" >> $local_LOG
 
-                echo >> $local_LOG 2>&1
+               echo >> $local_LOG 2>&1
+               echo Start to iterate through the output files . . . >> $local_LOG 2>&1
+
+               for f in ls *.out; do
+                   
+                   # Cut the name of the output file to string together the name of
+                   # the other file names
+                   local JOBNAME=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
+
+                   local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
+
+                   local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
+
+                   # Create a copy of the input file increasing index by one
+                   cp $INPUTFILE "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+                   cp $NWCHEMFILE "$NWCHEMFILE_prefix"_$COUNT."$NWCHEMFILE_suffix"
+                   sed -i "s/NEED_INDEX_NUM_HERE/$COUNT/" "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+
+                   echo >> $local_LOG 2>&1
+                   echo -------------------- >> $local_LOG 2>&1
+                   echo Reading file $f >> $local_LOG 2>&1
+                   echo Appending to file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> $local_LOG 2>&1
+
+                   echo >> $local_LOG 2>&1
 
 
-                # Iterate through the array ATOM_LIST to obtain the respected
-                # coordinates
-                for num in $(seq 1 $natoms); do
+                   # Iterate through the array ATOM_LIST to obtain the respected
+                   # coordinates
+                   for num in $(seq 1 $natoms); do
+                       
+                       # Update the log with values, useful for debugging
+                       # Log file will be within the directory $DIR
+                       echo >> $local_LOG 2>&1
+                       echo num=$num >> $local_LOG 2>&1
 
-                    # Update the log with values, useful for debugging
-                    # Log file will be within the directory $DIR
-                    echo >> $local_LOG 2>&1
-                    echo num=$num >> $local_LOG 2>&1
+                       # Splice the Q(x,y,z) from the output file and store the
+                       # values
+                       local ATOM_Qxyz=()
+                       ATOM_Qxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $1, $2, $3}')
 
-                    # Splice the Q(x,y,z) from the output file and store the
-                    # values
-                    local ATOM_Qxyz=()
-                    ATOM_Qxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $1, $2, $3}')
+                       # Update the log with values, useful for debugging
+                       # Log file will be within the directory $DIR
+                       echo >> $local_LOG 2>&1
+                       echo ATOM_Qxyz=$ATOM_Qxyz >> $local_LOG 2>&1
 
-                    # Update the log with values, useful for debugging
-                    # Log file will be within the directory $DIR
-                    echo >> $local_LOG 2>&1
-                    echo ATOM_Qxyz=$ATOM_Qxyz >> $local_LOG 2>&1
+                       # Append Q(x,y,z) coordinates to the input file
+                       echo $ATOM_Qxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
 
-                    # Append Q(x,y,z) coordinates to the input file
-                    echo $ATOM_Qxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+                       echo >> ../$LOG 2>&1
+                       echo Fragment coordinates taken from $f and moved to input\
+                       file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix">> ../$LOG 2>&1
+                   done
 
-                    echo >> ../$LOG 2>&1
-                    echo Fragment coordinates taken from $f and moved to input\
-                    file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix">> ../$LOG 2>&1
-                done
+                   for num in $(seq 1 $natoms); do
+                       
+                       # Update the log with values, useful for debugging
+                       # Log file will be within the directory $DIR
+                       echo >> $local_LOG 2>&1
+                       echo num=$num >> $local_LOG 2>&1
 
-                for num in $(seq 1 $natoms); do
+                       # Splice the P(x,y,z) from the output file and store the values
+                       local ATOM_Pxyz=()
+                       ATOM_Pxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $4, $5, $6}')
 
-                    # Update the log with values, useful for debugging
-                    # Log file will be within the directory $DIR
-                    echo >> $local_LOG 2>&1
-                    echo num=$num >> $local_LOG 2>&1
+                       # Update the log with values, useful for debugging
+                       # Log file will be within the $DIR
+                       echo >> $local_LOG 2>&1
+                       echo ATOM_Pxyz=$ATOM_Pxyz >> $local_LOG 2>&1
 
-                    # Splice the P(x,y,z) from the output file and store the values
-                    local ATOM_Pxyz=()
-                    ATOM_Pxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $4, $5, $6}')
+                       # Append P(x,y,z) coordinates to the input file
+                       echo $ATOM_Pxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
 
-                    # Update the log with values, useful for debugging
-                    # Log file will be within the $DIR
-                    echo >> $local_LOG 2>&1
-                    echo ATOM_Pxyz=$ATOM_Pxyz >> $local_LOG 2>&1
-
-                    # Append P(x,y,z) coordinates to the input file
-                    echo $ATOM_Pxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
-
-                    echo >> ../$LOG 2>&1
-                    echo Fragment coordinates taken from $f and moved to input \
-                    file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> ../$LOG 2>&1
-                done
-
-            done ;;
+                       echo >> ../$LOG 2>&1
+                       echo Fragment coordinates taken from $f and moved to input \
+                       file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> ../$LOG 2>&1
+                   done
+               
+               done ;;
 
             *)
                 echo No criegee name given. ;;
@@ -1351,6 +1399,7 @@ echo Starting program ... >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 
 # Ask which criegee fragment to look for
+echo
 echo Options for criegee fragments:
 echo simple - will extract 5 atoms, formaldehyde carbonyl oxide
 echo propene - will extract 8 atoms, acetaldehyde oxide
@@ -1360,6 +1409,7 @@ echo "Which criegee fragment do you want to extract?"; read criegee
 
 if [ "$criegee" = "all" ]; then
 
+    echo
     echo "What is the total number of atoms?"; read natoms
 
     echo
