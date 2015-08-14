@@ -1015,7 +1015,7 @@ function frag_input()
                     file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> ../$LOG 2>&1
                 done
 
-            done
+            done ;;
 
             *)
                 echo No criegee name given. ;;
