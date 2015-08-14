@@ -199,7 +199,7 @@ cp_files ()
         echo
 
         # iterate over all the output files
-        for f in ls *.out; do
+        for f in *.out; do
 
             # Cut the name of the output file to string together the name of
             # the other file names
@@ -396,8 +396,6 @@ function frag_input()
     local LIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | \
     awk '{print $1}' | sed 's/\:/ /')
 
-    local LIST_ALL=$(ls *.out)
-
     #echo
     #echo From within frag_input, line 287 arg 6=$6
 
@@ -429,6 +427,7 @@ function frag_input()
 
     local local_LOG="frag_input.log"
 
+    echo
     echo What number do you want to start at for your input files?; read startnum
 
     local COUNT=$startnum
@@ -989,7 +988,7 @@ function frag_input()
                echo >> $local_LOG 2>&1
                echo Start to iterate through the output files . . . >> $local_LOG 2>&1
 
-               for f in ls *.out; do
+               for f in *.out; do
                    
                    # Cut the name of the output file to string together the name of
                    # the other file names
