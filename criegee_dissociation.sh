@@ -1567,10 +1567,23 @@ sleep 0.15
 
 check_logfile $LOGFILE "test_response"
 
-FILECOUNT=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | wc -l)
+if [ "$criegee" = "all" ]; then
 
-FILELIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | awk '{print $1}' \
-| sed 's/\:/ /')
+    # count the number of out files
+    FILECOUNT=$(ls *.out | wc -l)
+
+    # list of files are all the out files
+    FILELIST=$(ls *.out)
+
+else
+
+    # count the number of files resulting in fragments
+    FILECOUNT=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | wc -l)
+
+    # list of files are files resulting in fragments
+    FILELIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | awk '{print $1}' | sed 's/\:/ /')
+
+fi
 
 check_logfile $LOGFILE "cp_files"
 
