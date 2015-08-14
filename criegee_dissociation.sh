@@ -1061,6 +1061,9 @@ function frag_input()
                        echo Fragment coordinates taken from $f and moved to input \
                        file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> ../$LOG 2>&1
                    done
+
+                   # Incerment COUNT by one
+                   ((COUNT++))
                
                done ;;
 
