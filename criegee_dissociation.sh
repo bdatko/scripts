@@ -347,6 +347,8 @@ function frag_input()
     local LIST=$(grep -H "==== SUMMARY OF TRAJECTORY ====" *.out | \
     awk '{print $1}' | sed 's/\:/ /')
 
+    local LIST_ALL=$(ls *.out)
+
     #echo
     #echo From within frag_input, line 287 arg 6=$6
 
@@ -920,6 +922,100 @@ function frag_input()
                     fi
                     
                 done ;;
+                
+            "all")
+
+            # Copying all Qs and Ps to the new input file
+            cp $INPUTFILE $DIR
+            cp $NWCHEMFILE $DIR
+            cd $DIR
+
+            # Update the log
+            echo >> $local_LOG
+            pwd >> $local_LOG
+            echo >> $local_LOG 2>&1
+            echo \
+            "===============================================================================" >> $local_LOG
+
+            echo >> $local_LOG 2>&1
+            echo Start to iterate through the output files . . . >> $local_LOG 2>&1
+
+            for f in ls *.out; do
+
+                # Cut the name of the output file to string together the name of
+                # the other file names
+                local JOBNAME=$(echo $f | sed 's/\./ /g' | awk '{print $1}')
+
+                local JOBID=$(echo $f | sed 's/\./ /g' | awk '{print $2}')
+
+                local JOBNUM=$(echo $f | sed 's/\./ /g' | awk '{print $3}')
+
+                # Create a copy of the input file increasing index by one
+                cp $INPUTFILE "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+                cp $NWCHEMFILE "$NWCHEMFILE_prefix"_$COUNT."$NWCHEMFILE_suffix"
+                sed -i "s/NEED_INDEX_NUM_HERE/$COUNT/" "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+
+                echo >> $local_LOG 2>&1
+                echo -------------------- >> $local_LOG 2>&1
+                echo Reading file $f >> $local_LOG 2>&1
+                echo Appending to file
+                "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> $local_LOG 2>&1
+
+                echo >> $local_LOG 2>&1
+
+
+                # Iterate through the array ATOM_LIST to obtain the respected
+                # coordinates
+                for num in $(seq 1 $natoms); do
+
+                    # Update the log with values, useful for debugging
+                    # Log file will be within the directory $DIR
+                    echo >> $local_LOG 2>&1
+                    echo num=$num >> $local_LOG 2>&1
+
+                    # Splice the Q(x,y,z) from the output file and store the
+                    # values
+                    local ATOM_Qxyz=()
+                    ATOM_Qxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $1, $2, $3}')
+
+                    # Update the log with values, useful for debugging
+                    # Log file will be within the directory $DIR
+                    echo >> $local_LOG 2>&1
+                    echo ATOM_Qxyz=$ATOM_Qxyz >> $local_LOG 2>&1
+
+                    # Append Q(x,y,z) coordinates to the input file
+                    echo $ATOM_Qxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+
+                    echo >> ../$LOG 2>&1
+                    echo Fragment coordinates taken from $f and moved to input\
+                    file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix">> ../$LOG 2>&1
+                done
+
+                for num in $(seq 1 $natoms); do
+
+                    # Update the log with values, useful for debugging
+                    # Log file will be within the directory $DIR
+                    echo >> $local_LOG 2>&1
+                    echo num=$num >> $local_LOG 2>&1
+
+                    # Splice the P(x,y,z) from the output file and store the values
+                    local ATOM_Pxyz=()
+                    ATOM_Pxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $4, $5, $6}')
+
+                    # Update the log with values, useful for debugging
+                    # Log file will be within the $DIR
+                    echo >> $local_LOG 2>&1
+                    echo ATOM_Pxyz=$ATOM_Pxyz >> $local_LOG 2>&1
+
+                    # Append P(x,y,z) coordinates to the input file
+                    echo $ATOM_Pxyz >> "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix"
+
+                    echo >> ../$LOG 2>&1
+                    echo Fragment coordinates taken from $f and moved to input \
+                    file "$INPUTFILE_prefix"_$COUNT."$INPUTFILE_suffix" >> ../$LOG 2>&1
+                done
+
+            done
 
             *)
                 echo No criegee name given. ;;
@@ -1255,7 +1351,21 @@ echo Starting program ... >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 
 # Ask which criegee fragment to look for
-echo "Which criegee fragment do you want to extract? (simple/propene)"; read criegee
+echo Options for criegee fragments:
+echo simple - will extract 5 atoms, formaldehyde carbonyl oxide
+echo propene - will extract 8 atoms, acetaldehyde oxide
+echo all - will extract all Qs and Ps, regardless of fragment
+echo
+echo "Which criegee fragment do you want to extract?"; read criegee
+
+if [ "$criegee" = "all" ]; then
+
+    echo "What is the total number of atoms?"; read natoms
+
+    echo
+    echo The number of atoms is $natoms
+
+fi
 
 case $criegee in
 
@@ -1266,7 +1376,7 @@ case $criegee in
         # Obtain the name of VENUS input file to copy files to
         echo
         echo What is the name of your VENUS input file, which I will append the \
-        fragmenation coordinates too?; read VENUS_INPUTFILE
+        fragmenation coordinates to?; read VENUS_INPUTFILE
 
         echo
         echo VENUS_INPUTFILE=$VENUS_INPUTFILE
@@ -1353,6 +1463,40 @@ case $criegee in
 
         echo
         echo NPATH3_NWChem=$NPATH3_NWChem ;;
+
+    "all")
+        echo
+        echo Your choice is $criegee, will extract all resulting Qs ans Ps
+
+        # Obtain the name of VENUS input file to copy files to
+        echo
+        echo What is the name of your VENUS input file, which I will append the \
+        fragmenation coordinates to?; read VENUS_INPUTFILE
+
+        echo
+        echo VENUS_INPUTFILE=$VENUS_INPUTFILE
+
+        # Test VENUS_INPUTFILE for existence in the current working directory
+        # exit if false
+        test_fileexist $VENUS_INPUTFILE VENUS_input_file
+
+        # Check w/ user if the VENUS input file is annotated as needed
+        echo
+        echo Before I start, is the tag NEED_INDEX_NUM_HERE placed within \
+        your VENUS input file named $VENUS_INPUTFILE? '(yes/no)'; read ans
+
+        # Test response to above question and double check for the annotations
+        test_filetag $ans $VENUS_INPUTFILE NEED_INDEX_NUM_HERE
+
+        # Obtain the name of NWChem input file to copy files
+        echo What is the name of your NWChem input file?; read NWCHEMFILE
+
+        # Test NWCHEMFILE for existence in the current working directory exit
+        # if false
+        test_fileexist $NWCHEMFILE NWChem_input_file
+
+        echo
+        echo NWCHEMFILE=$NWCHEMFILE ;;
 
     "other")
         echo Sorry, $criegee is not a criegee fragment 2>&1
