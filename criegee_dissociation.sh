@@ -1023,7 +1023,7 @@ function frag_input()
                        # Splice the Q(x,y,z) from the output file and store the
                        # values
                        local ATOM_Qxyz=()
-                       ATOM_Qxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $1, $2, $3}')
+                       ATOM_Qxyz+=$(grep "system" -B11 $f | sed -n "$num"p | awk '{print $1, $2, $3}')
 
                        # Update the log with values, useful for debugging
                        # Log file will be within the directory $DIR
@@ -1047,7 +1047,7 @@ function frag_input()
 
                        # Splice the P(x,y,z) from the output file and store the values
                        local ATOM_Pxyz=()
-                       ATOM_Pxyz+=$(grep "system" -B14 $f | sed -n "$num"p | awk '{print $4, $5, $6}')
+                       ATOM_Pxyz+=$(grep "system" -B11 $f | sed -n "$num"p | awk '{print $4, $5, $6}')
 
                        # Update the log with values, useful for debugging
                        # Log file will be within the $DIR
