@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -j y
 #$ -S /bin/bash
-#$ -N Criegee_NPATH_test
+#$ -N TS_VHP_Diss_UB3LYP
 #$ -o $JOB_NAME.o$JOB_ID
 #$ -q normal.q
 #$ -cwd
@@ -9,11 +9,16 @@
 
 echo Start: `date` ${JOB_NAME}-${JOB_ID}-${SGE_TASK_ID}
 
+# Attempt to fix a sharded mem problem
+#export ARMCI_DEFAULT_SHMMAX=18.192
+
 # create User defined vars
 FILENAME=${JOB_NAME}_${SGE_TASK_ID} #set the bash variable FILENAME to Criegee
 JOB_TAG=${JOB_ID}.${SGE_TASK_ID}
-VARNAMES=varnames_${JOB_NAME}.o${SGE_TASK_ID}
-LOGFILE=joblog-${JOB_NAME}-${JOB_ID}.txt
+JOBLOG=log_${JOB_NAME}.o${SGE_TASK_ID}
+SUBMITLOG=joblog-${JOB_NAME}-${JOB_ID}.txt
+LSOFLOGFILE=lsoflog-${JOB_NAME}-${JOB_ID}-${SGE_TASK_ID}.csv
+LOGINTERVAL=30 # wait period in seconds between samples
 
 # create scratch and work directories and copy input
 NWSCRATCH=/state/partition1/${JOB_ID}_${SGE_TASK_ID}
@@ -37,79 +42,145 @@ fi
 cp $FILENAME.* $NWSCRATCH/
 cd $NWSCRATCH/
 
+unset SGE_ROOT
+
 # load the env
 module load intel-11.1-080 mvapich2-2.0b-intel venus-nwc-6.1.1-intel
 
 # echo Important Variables
-echo "Start: `date`" >> $SGE_CWD_PATH/$VARNAMES
-echo "===============================" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE and Envieroment defined variables below:" >> $SGE_CWD_PATH/$VARNAMES
-echo "" >> $SGE_CWD_PATH/$VARNAMES
-echo "PATH=$PATH" >> $SGE_CWD_PATH/$VARNAMES
-echo "" >> $SGE_CWD_PATH/$VARNAMES
-echo "HOME=$HOME" >> $SGE_CWD_PATH/$VARNAMES
-echo "JOB_NAME=$JOB_NAME" >> $SGE_CWD_PATH/$VARNAMES
-echo "JOB_ID=$JOB_ID" >> $SGE_CWD_PATH/$VARNAMES
-echo "HOSTNAME=`hostname`" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE_O_LOGNAME=$SGE_O_LOGNAME" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE_TASK_ID=$SGE_TASK_ID" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE_O_WORKDIR=$SGE_O_WORKDIR" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE_O_HOME=$SGE_O_HOME" >> $SGE_CWD_PATH/$VARNAMES
-echo "SGE_CWD_PATH=$SGE_CWD_PATH" >> $SGE_CWD_PATH/$VARNAMES
-echo "TMPDIR=$TMPDIR" >> $SGE_CWD_PATH/$VARNAMES
-echo "WORK=$WORK" >> $SGE_CWD_PATH/$VARNAMES
-echo "SCRATCH=$SCRATCH" >> $SGE_CWD_PATH/$VARNAMES
-echo "NSLOTS=$NSLOTS" >> $SGE_CWD_PATH/$VARNAMES
-echo " " >> $SGE_CWD_PATH/$VARNAMES
-echo "User defined variables below:" >> $SGE_CWD_PATH/$VARNAMES
-echo "" >> $SGE_CWD_PATH/$VARNAMES
-echo "FILENAME=$FILENAME" >> $SGE_CWD_PATH/$VARNAMES
-echo "NWSCRATCH=$NWSCRATCH" >> $SGE_CWD_PATH/$VARNAMES
-echo "WORKTASK=$WORKTASK" >> $SGE_CWD_PATH/$VARNAMES
-echo "JOB_TAG=$JOB_TAG" >> $SGE_CWD_PATH/$VARNAMES
-echo "VARNAMES=$VARNAMES" >> $SGE_CWD_PATH/$VARNAMES
-echo "===============================" >> $SGE_CWD_PATH/$VARNAMES
-echo "End:  `date`" >> $SGE_CWD_PATH/$VARNAMES
+echo Start ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$JOBLOG
+echo "===============================" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE and Envieroment defined variables below:" >> $SGE_CWD_PATH/$JOBLOG
+echo "" >> $SGE_CWD_PATH/$JOBLOG
+echo "PATH=$PATH" >> $SGE_CWD_PATH/$JOBLOG
+echo "" >> $SGE_CWD_PATH/$JOBLOG
+echo "HOME=$HOME" >> $SGE_CWD_PATH/$JOBLOG
+echo "JOB_NAME=$JOB_NAME" >> $SGE_CWD_PATH/$JOBLOG
+echo "JOB_ID=$JOB_ID" >> $SGE_CWD_PATH/$JOBLOG
+echo "HOSTNAME=`hostname`" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE_O_LOGNAME=$SGE_O_LOGNAME" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE_TASK_ID=$SGE_TASK_ID" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE_O_WORKDIR=$SGE_O_WORKDIR" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE_O_HOME=$SGE_O_HOME" >> $SGE_CWD_PATH/$JOBLOG
+echo "SGE_CWD_PATH=$SGE_CWD_PATH" >> $SGE_CWD_PATH/$JOBLOG
+echo "TMPDIR=$TMPDIR" >> $SGE_CWD_PATH/$JOBLOG
+echo "WORK=$WORK" >> $SGE_CWD_PATH/$JOBLOG
+echo "SCRATCH=$SCRATCH" >> $SGE_CWD_PATH/$JOBLOG
+echo "NSLOTS=$NSLOTS" >> $SGE_CWD_PATH/$JOBLOG
+echo " " >> $SGE_CWD_PATH/$JOBLOG
+echo "User defined variables below:" >> $SGE_CWD_PATH/$JOBLOG
+echo "" >> $SGE_CWD_PATH/$JOBLOG
+echo "FILENAME=$FILENAME" >> $SGE_CWD_PATH/$JOBLOG
+echo "NWSCRATCH=$NWSCRATCH" >> $SGE_CWD_PATH/$JOBLOG
+echo "WORKTASK=$WORKTASK" >> $SGE_CWD_PATH/$JOBLOG
+echo "JOB_TAG=$JOB_TAG" >> $SGE_CWD_PATH/$JOBLOG
+echo "JOBLOG=$JOBLOG" >> $SGE_CWD_PATH/$JOBLOG
+echo "LSOFLOGFILE=$LSOFLOGFILE" >> $SGE_CWD_PATH/$JOBLOG
+echo "LOGINTERVAL=$LOGINTERVAL" >> $SGE_CWD_PATH/$JOBLOG
 
-echo Start ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$LOGFILE
+echo Start ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$SUBMITLOG
 
-# echo important variables to the $LOGFILE
-echo "===============================" >> $SGE_CWD_PATH/$LOGFILE
-echo "SGE and Envieroment defined variables below:" >> $SGE_CWD_PATH/$LOGFILE
-echo "" >> $SGE_CWD_PATH/$LOGFILE
-echo "PATH=$PATH" >> $SGE_CWD_PATH/$LOGFILE
-echo "" >> $SGE_CWD_PATH/$LOGFILE
-echo "JOB_NAME=$JOB_NAME" >> $SGE_CWD_PATH/$LOGFILE
-echo "JOB_ID=$JOB_ID" >> $SGE_CWD_PATH/$LOGFILE
-echo "HOSTNAME=`hostname`" >> $SGE_CWD_PATH/$LOGFILE
-echo "SGE_TASK_ID=$SGE_TASK_ID" >> $SGE_CWD_PATH/$LOGFILE
-echo "SGE_O_WORKDIR=$SGE_O_WORKDIR" >> $SGE_CWD_PATH/$LOGFILE
-echo "SGE_O_HOME=$SGE_O_HOME" >> $SGE_CWD_PATH/$LOGFILE
-echo "SGE_CWD_PATH=$SGE_CWD_PATH" >> $SGE_CWD_PATH/$LOGFILE
-echo "TMPDIR=$TMPDIR" >> $SGE_CWD_PATH/$LOGFILE
-echo "NSLOTS=$NSLOTS" >> $SGE_CWD_PATH/$LOGFILE
-echo "User defined variables below:" >> $SGE_CWD_PATH/$LOGFILE
-echo "" >> $SGE_CWD_PATH/$LOGFILE
-echo "FILENAME=$FILENAME" >> $SGE_CWD_PATH/$LOGFILE
-echo "NWSCRATCH=$NWSCRATCH" >> $SGE_CWD_PATH/$LOGFILE
-echo "WORKTASK=$WORKTASK" >> $SGE_CWD_PATH/$LOGFILE
-echo "JOB_TAG=$JOB_TAG" >> $SGE_CWD_PATH/$LOGFILE
-echo "VARNAMES=$VARNAMES" >> $SGE_CWD_PATH/$LOGFILE
-echo "===============================" >> $SGE_CWD_PATH/$LOGFILE
-echo "" >> $SGE_CWD_PATH/$LOGFILE
+# echo important variables to the $SUBMITLOG
+echo "===============================" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "SGE and Envieroment defined variables below:" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "PATH=$PATH" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "JOB_NAME=$JOB_NAME" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "JOB_ID=$JOB_ID" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "HOSTNAME=`hostname`" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "SGE_TASK_ID=$SGE_TASK_ID" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "SGE_O_WORKDIR=$SGE_O_WORKDIR" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "SGE_O_HOME=$SGE_O_HOME" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "SGE_CWD_PATH=$SGE_CWD_PATH" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "TMPDIR=$TMPDIR" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "NSLOTS=$NSLOTS" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "User defined variables below:" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "FILENAME=$FILENAME" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "NWSCRATCH=$NWSCRATCH" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "WORKTASK=$WORKTASK" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "JOB_TAG=$JOB_TAG" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "JOBLOG=$JOBLOG" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "===============================" >> $SGE_CWD_PATH/$SUBMITLOG
+echo "" >> $SGE_CWD_PATH/$SUBMITLOG
 
 for (( i=1; i <= ${NSLOTS}; i++))
 do
  echo $HOSTNAME >> machinefile.${JOB_ID}-${SGE_TASK_ID}
 done
 
+# check to see if the VENUS job is a check point file
+NCHKP_val=$(grep --no-filename NCHKP "$FILENAME".dt | awk '{print $1}' | sed 's/,/ /g' | awk '{print $3}')
+
+echo NCHKP_val=$NCHKP_val >> $SGE_CWD_PATH/$JOBLOG
+echo "===============================" >> $SGE_CWD_PATH/$JOBLOG
+
+if [ "$NCHKP_val" -eq "1" ]; then
+    echo $FILENAME.dt is using a check point file, Unit 50
+    mv "$FILENAME".fort.50 "fort.50" || echo Cannot mv fort.50, no such file "$FILENAME".fort.50
+fi
+
+# start the number of open files log
+echo >> $JOBLOG
+echo "Time(s), bdatko_open_files, total_open_files" >> $LSOFLOGFILE
+
 # run the cmd
-/usr/bin/time mpiexec -n $NSLOTS -f machinefile.${JOB_ID}-${SGE_TASK_ID} ven_nw.e < ${FILENAME}.dt >& ${FILENAME}.out
+/usr/bin/time mpiexec -n $NSLOTS -f machinefile.${JOB_ID}-${SGE_TASK_ID} ven_nw.e < ${FILENAME}.dt >& ${FILENAME}.out &
+PROC_ID=$!
+
+# loging list of open files to $LSOFLOGFILE over the whole length of the
+# calculation on an interval of $LOGINTERVAL
+while ps -p $PROC_ID > /dev/null; do
+    echo `date +%s`, `lsof -u bdatko | wc -l`, `lsof | wc -l` >> $LSOFLOGFILE
+    
+    numofiles=$( tail -1 $LSOFLOGFILE | awk '{print $2}' | sed 's/,//')
+    sleep $LOGINTERVAL
+
+#    if [ "$numofiles" -ge "1700" ]; then
+#
+#        PATH=/usr/bin/gdb:$PATH
+#
+#        nproc_less_one=$(echo $(nproc) | awk '{print $1 - 1}')
+#
+#        procPID=()
+#
+#        for n in $(seq 1 $(nproc)); do
+#
+#            procnum=$(ps -A | grep ven_nw.e | awk '{print $1}'i | sed -n "$n"p)
+#
+#            procPID+=($procnum)
+#
+#        done
+#
+#        for n in $(seq -w 0 $nproc_less_one); do
+#
+#            linenumber=$(lsof calc.gridpts.$n | wc -l)
+#
+#            listoFD=$(lsof calc.gridpts.$n | awk '{print $4}' | sed -n 2,"$linenumber80"p | sed 's/u//')
+#
+#            for nn in $listoFD; do
+#
+#                echo call close "($nn)" >> close_gdb
+#
+#            done
+#
+#            echo quit >> close_gdb
+#
+#            gdb -p ${procPID[$n]} -x close_gdb
+#
+#            rm close_gdb
+#
+#        done
+#    fi
+
+done
 
 # copy results to $WORK
-cp $FILENAME.out $WORKTASK/$FILENAME.${JOB_TAG}.out || echo "${JOB_TAG} Cannot cp $FILENAME.out No such file" >> $SGE_CWD_PATH/$LOGFILE
-cp fort.8 $WORKTASK/${FILENAME}_${JOB_TAG}.fort.8 || echo "${JOB_TAG} Cannot cp fort.8 No such file" >> $SGE_CWD_PATH/$LOGFILE
-cp -f fort.50 $WORKTASK/${FILENAME}_${JOB_TAG}.fort.50 || echo "${JOB_TAG} Cannot cp fort.50 No such file" >> $SGE_CWD_PATH/$LOGFILE
+cp $FILENAME.out $WORKTASK/$FILENAME.${JOB_TAG}.out || echo "${JOB_TAG} Cannot cp $FILENAME.out No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp fort.8 $WORKTASK/${FILENAME}_${JOB_TAG}.fort.8 || echo "${JOB_TAG} Cannot cp fort.8 No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp -f fort.50 $WORKTASK/${FILENAME}_${JOB_TAG}.fort.50 || echo "${JOB_TAG} Cannot cp fort.50 No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp $LSOFLOGFILE $WORKTASK/ || echo "${JOB_TAG} Cannot cp $LSOFLOGFILE No such file" >> $SGE_CWD_PATH/$SUBMITLOG
 
 # clean up scratch
 cd $NWSCRATCH
@@ -118,10 +189,12 @@ rm -rf ${JOB_ID}_${SGE_TASK_ID}
 
 # second copy step to $SGE_CWD_PATH
 cd $WORKTASK
-cp $FILENAME.${JOB_TAG}.out $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp $FILENAME.${JOB_TAG}.out No such file" >> $SGE_CWD_PATH/$LOGFILE
-cp ${FILENAME}_${JOB_TAG}.fort.8 $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp fort.8.${JOB_TAG} No such file" >> $SGE_CWD_PATH/$LOGFILE
-cp -f ${FILENAME}_${JOB_TAG}.fort.50 $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp fort.50.${JOB_TAG} No such file" >> $SGE_CWD_PATH/$LOGFILE
+cp $FILENAME.${JOB_TAG}.out $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp $FILENAME.${JOB_TAG}.out No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp ${FILENAME}_${JOB_TAG}.fort.8 $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp fort.8.${JOB_TAG} No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp -f ${FILENAME}_${JOB_TAG}.fort.50 $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp fort.50.${JOB_TAG} No such file" >> $SGE_CWD_PATH/$SUBMITLOG
+cp $LSOFLOGFILE $SGE_CWD_PATH/ || echo "${JOB_TAG} Cannot cp $LSOFLOGFILE No such file" >> $SGE_CWD_PATH/$SUBMITLOG
 
-echo End ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$LOGFILE
-echo "" >> $SGE_CWD_PATH/$LOGFILE
+echo End ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$SUBMITLOG
+echo End ${FILENAME} ${JOB_ID}-${SGE_TASK_ID} `date` >> $SGE_CWD_PATH/$JOBLOG
+echo "" >> $SGE_CWD_PATH/$SUBMITLOG
 echo End: `date` ${JOB_NAME}-${JOB_ID}-${SGE_TASK_ID}
